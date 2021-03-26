@@ -1,25 +1,41 @@
 #include <stdio.h>
+#include <stdlib.h>
 
-/* Input buffer */
-static char input[2048];
+#ifdef _WIN32
+#include <string.h>
+/* Compatibility functions for Win */
+static char buffer[2048];
+
+char* readline(char* prompt) {
+    fputs(prompt, stdout);
+    fflush(stdout);
+    fgets(buffer, 2048, stdin);
+    char* cpy = malloc(strlen(buffer) + 1);
+    strcpy(cpy, buffer);
+    cpy[strlen(cpy) - 1] = '\0';
+    return cpy;
+}
+
+void add_history(char* unused) {}
+/* End Win compat functions  */
+
+#else
+#include <editline/readline.h>
+#include <editline/history.h>
+#endif
 
 int main(int argc, char** argv) {
     /* Print Version and Exit Information */
     puts("Lispy Version 0.0.0.1");
     puts("Press Ctrl+c to Exit\n");
 
-    while (1) {        
-        /* Output the prompt */
-        fputs("lispy> ", stdout);
-        /* MSYS2 Win 10 workaround for 'stdout' flush issues */
-        fflush(stdout);
+    while (1) {
+        char* input = readline("lispy> ");        
+        add_history(input);
 
-        /* Read input < input buffer size */
-        fgets(input, 2048, stdin);
-
-        /* Echo input back to user */
-        printf("No you're a %s", input);
-    }    
+        printf("No you're a %s\n", input);
+        free(input);
+    }
 
     return 0;
 }
