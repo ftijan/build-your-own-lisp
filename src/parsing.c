@@ -25,6 +25,55 @@ void add_history(char* unused) {}
 #include <editline/history.h>
 #endif
 
+/* Test: recursive node count */
+int number_of_nodes(mpc_ast_t* t) {
+    if (t->children_num == 0) { return 1; }
+    if (t->children_num >= 1) {
+        int total = 1;
+        for (int i = 0; i < t->children_num; i++) {
+            total = total + number_of_nodes(t->children[i]);
+        }
+        return total;
+    }
+    return 0;
+}
+
+void node_number_print(mpc_ast_t* ast) {
+    int node_number = number_of_nodes(ast);            
+    printf("Number of nodes: %d\n", node_number);
+}
+
+/* eval */
+double eval_op(double x, char* op, double y) {
+    if(strcmp(op, "+") == 0) { return x + y; };
+    if(strcmp(op, "-") == 0) { return x - y; };
+    if(strcmp(op, "*") == 0) { return x * y; };
+    if(strcmp(op, "/") == 0) { return x / y; };
+    if(strcmp(op, "%") == 0) { return (long)x % (long)y; };
+    return 0;
+}
+
+double eval(mpc_ast_t* t) {
+    /* return value if number */
+    if (strstr(t->tag, "number")) {
+        return strtod(t->contents, NULL);
+    }
+
+    /* operator */
+    char* op = t->children[1]->contents;
+
+    /* store third child in 'x' */
+    double x = eval(t->children[2]);
+
+    int i = 3;
+    while(strstr(t->children[i]->tag, "expr")) {
+        x = eval_op(x, op, eval(t->children[i]));
+        i++;
+    }
+
+    return x;
+}
+
 int main(int argc, char** argv) {
     /* Parsers */
     mpc_parser_t* Number = mpc_new("number");
@@ -54,7 +103,12 @@ int main(int argc, char** argv) {
         mpc_result_t r;
         if (mpc_parse("<stdin>", input, Lispy, &r)) {
             /* Success: print and delete AST */
-            mpc_ast_print(r.output);
+            //mpc_ast_print(r.output);                       
+            //node_number_print(r.output);
+            
+            double result = eval(r.output);
+            printf("%lf\n", result);
+            
             mpc_ast_delete(r.output);
         } else {
             /* Fail: print and delete the error */
