@@ -1,6 +1,7 @@
 #include "lib/mpc.h"
 #include <stdio.h>
 #include <stdlib.h>
+#include <math.h>
 
 #ifdef _WIN32
 #include <string.h>
@@ -50,6 +51,7 @@ double eval_op(double x, char* op, double y) {
     if(strcmp(op, "*") == 0) { return x * y; };
     if(strcmp(op, "/") == 0) { return x / y; };
     if(strcmp(op, "%") == 0) { return (long)x % (long)y; };
+    if(strcmp(op, "^") == 0) { return pow(x, y); };
     return 0;
 }
 
@@ -85,7 +87,7 @@ int main(int argc, char** argv) {
     mpca_lang(MPCA_LANG_DEFAULT,
         "\
         number  : /-?([0-9]+[.])?[0-9]+/ ; \
-        operator: '+' | '-' | '*' | '/' | '%' ; \
+        operator: '+' | '-' | '*' | '/' | '%' | '^' ; \
         expr    : <number> | '(' <operator> <expr>+ ')' ; \
         lispy   : /^/ <operator> <expr>+ /$/ ; \
         ",
@@ -105,7 +107,7 @@ int main(int argc, char** argv) {
             /* Success: print and delete AST */
             //mpc_ast_print(r.output);                       
             //node_number_print(r.output);
-            
+
             double result = eval(r.output);
             printf("%lf\n", result);
             
