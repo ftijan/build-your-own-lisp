@@ -1,78 +1,10 @@
-#include "lib/mpc.h"
 #include <stdio.h>
 #include <stdlib.h>
+#include <math.h>
 
-#ifdef _WIN32
-#include <string.h>
-/* Compatibility functions for Win */
-static char buffer[2048];
-
-char* readline(char* prompt) {
-    fputs(prompt, stdout);
-    fflush(stdout);
-    fgets(buffer, 2048, stdin);
-    char* cpy = malloc(strlen(buffer) + 1);
-    strcpy(cpy, buffer);
-    cpy[strlen(cpy) - 1] = '\0';
-    return cpy;
-}
-
-void add_history(char* unused) {}
-/* End Win compat functions  */
-
-#else
-#include <editline/readline.h>
-#include <editline/history.h>
-#endif
-
-/* Test: recursive node count */
-int number_of_nodes(mpc_ast_t* t) {
-    if (t->children_num == 0) { return 1; }
-    if (t->children_num >= 1) {
-        int total = 1;
-        for (int i = 0; i < t->children_num; i++) {
-            total = total + number_of_nodes(t->children[i]);
-        }
-        return total;
-    }
-    return 0;
-}
-
-void node_number_print(mpc_ast_t* ast) {
-    int node_number = number_of_nodes(ast);            
-    printf("Number of nodes: %d\n", node_number);
-}
-
-/* eval */
-double eval_op(double x, char* op, double y) {
-    if(strcmp(op, "+") == 0) { return x + y; };
-    if(strcmp(op, "-") == 0) { return x - y; };
-    if(strcmp(op, "*") == 0) { return x * y; };
-    if(strcmp(op, "/") == 0) { return x / y; };
-    if(strcmp(op, "%") == 0) { return (long)x % (long)y; };
-    return 0;
-}
-
-double eval(mpc_ast_t* t) {
-    /* return value if number */
-    if (strstr(t->tag, "number")) {
-        return strtod(t->contents, NULL);
-    }
-
-    /* operator */
-    char* op = t->children[1]->contents;
-
-    /* store third child in 'x' */
-    double x = eval(t->children[2]);
-
-    int i = 3;
-    while(strstr(t->children[i]->tag, "expr")) {
-        x = eval_op(x, op, eval(t->children[i]));
-        i++;
-    }
-
-    return x;
-}
+#include "lib/mpc.h"
+#include "compat.h"
+#include "parser-util.h"
 
 int main(int argc, char** argv) {
     /* Parsers */
@@ -85,7 +17,7 @@ int main(int argc, char** argv) {
     mpca_lang(MPCA_LANG_DEFAULT,
         "\
         number  : /-?([0-9]+[.])?[0-9]+/ ; \
-        operator: '+' | '-' | '*' | '/' | '%' ; \
+        operator: '+' | '-' | '*' | '/' ; \
         expr    : <number> | '(' <operator> <expr>+ ')' ; \
         lispy   : /^/ <operator> <expr>+ /$/ ; \
         ",
@@ -105,9 +37,9 @@ int main(int argc, char** argv) {
             /* Success: print and delete AST */
             //mpc_ast_print(r.output);                       
             //node_number_print(r.output);
-            
-            double result = eval(r.output);
-            printf("%lf\n", result);
+
+            lval result = eval(r.output);
+            lval_println(result);            
             
             mpc_ast_delete(r.output);
         } else {
