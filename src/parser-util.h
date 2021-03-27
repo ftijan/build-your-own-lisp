@@ -1,18 +1,32 @@
 #include <stdlib.h>
 #include "lib/mpc.h"
 
-enum { LVAL_NUM, LVAL_ERR, LVAL_SYM, LVAL_SEXPR, LVAL_QEXPR };
+struct lval;
+struct lenv;
+typedef struct lval lval;
+typedef struct lenv lenv;
 
-typedef struct lval {
+enum { LVAL_NUM, LVAL_ERR, LVAL_SYM, LVAL_FUN, LVAL_SEXPR, LVAL_QEXPR };
+
+typedef lval*(*lbuiltin)(lenv*, lval*);
+
+struct lval {
     int type;
     long num;
     /* string data in Error and Symbol */
     char* err;
     char* sym;
+    lbuiltin fun;
     /* count and pointer to a list of lval* */
     int count;
     struct lval** cell;
-} lval;
+};
+
+struct lenv {
+    int count;
+    char** syms;
+    lval** vals;
+};
 
 lval* lval_num(long x);
 lval* lval_err(char* m);
@@ -38,3 +52,9 @@ lval* builtin_eval(lval* a);
 lval* builtin_join(lval* a);
 lval* lval_join(lval* x, lval* y);
 lval* builtin(lval* a, char* func);
+lval* lval_fun(lbuiltin func);
+lval* lval_copy(lval* v);
+lenv* lenv_new(void);
+void lenv_del(lenv* e);
+lval* lenv_get(lenv* e, lval* k);
+void lenv_put(lenv* e, lval* k, lval* v);
