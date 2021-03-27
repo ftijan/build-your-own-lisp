@@ -442,11 +442,9 @@ void lenv_add_builtin(lenv* e, char* name, lbuiltin func) {
 
 void lenv_add_builtins(lenv* e) {
     /* Var funcs */
-    lenv_add_builtin(e, "def", builtin_def);
-    lenv_add_builtin(e, "=", builtin_put);
-
-    /* Lambda funcs */
     lenv_add_builtin(e, "\\", builtin_lambda);
+    lenv_add_builtin(e, "def", builtin_def);
+    lenv_add_builtin(e, "=", builtin_put);    
 
     /* List funcs */    
     lenv_add_builtin(e, "list", builtin_list);
@@ -587,7 +585,7 @@ lval* builtin_put(lenv* e, lval* a) {
 
 lval* lval_call(lenv* e, lval* f, lval* a) {
     /* builtin: just return it */
-    if(f->builtin) { return f->builtin(e, a); }
+    if (f->builtin) { return f->builtin(e, a); }
 
     /* record arg counts */
     int given = a->count;
@@ -595,7 +593,8 @@ lval* lval_call(lenv* e, lval* f, lval* a) {
 
     /* while args to process remain */
     while (a->count) {
-        if(f->formals->count == 0) {
+        /* if no more formals to bind */
+        if (f->formals->count == 0) {
             lval_del(a); return lval_err(
                 "Function passed too many arguments. "
                 "Got %i, Expected %i.", given, total);
@@ -603,6 +602,23 @@ lval* lval_call(lenv* e, lval* f, lval* a) {
 
         /* get the symbol and arg value */
         lval* sym = lval_pop(f->formals, 0);
+
+        /* deal with '&' */
+        if (strcmp(sym->sym, "&") == 0) {
+            /* '&' shouldn't hang */
+            if (f->formals->count != 1) {
+                lval_del(a);
+                return lval_err("Function format invalid. "
+                "Symbol '&' not followed by single symbol.");
+            }
+
+            /* next formal should be bound to remaining args */
+            lval* nsym = lval_pop(f->formals, 0);
+            lenv_put(f->env, nsym, builtin_list(e, a));
+            lval_del(sym); lval_del(nsym);
+            break;
+        }
+
         lval* val = lval_pop(a, 0);
         /* bind into func env */
         lenv_put(f->env, sym, val);
@@ -613,8 +629,28 @@ lval* lval_call(lenv* e, lval* f, lval* a) {
     /* arg list cleanup */
     lval_del(a);
 
+    /* if '&' reamins in formal list bind to empty list */
+    if (f->formals->count > 0 && strcmp(f->formals->cell[0]->sym, "&") == 0) {
+        /* check validity */
+        if (f->formals->count != 2) {
+            return lval_err("Function format invalid. "
+                "Symbol '&' not followed by single symbol.");
+        }
+
+        /* remove '&' */
+        lval_del(lval_pop(f->formals, 0));
+
+        /* bind next sym, create empty list */
+        lval* sym = lval_pop(f->formals, 0);
+        lval* val = lval_qexpr();
+
+        /* bind to env and delete */
+        lenv_put(f->env, sym, val);
+        lval_del(sym); lval_del(val);
+    }
+
     /* if all formals bound */
-    if(f->formals->count == 0) {
+    if (f->formals->count == 0) {
         /* set env parent to eval env */
         f->env->par = e;
 
