@@ -9,19 +9,21 @@
 int main(int argc, char** argv) {
     /* Parsers */
     mpc_parser_t* Number = mpc_new("number");
-    mpc_parser_t* Operator = mpc_new("operator");
+    mpc_parser_t* Symbol = mpc_new("symbol");
+    mpc_parser_t* Sexpr = mpc_new("sexpr");
     mpc_parser_t* Expr = mpc_new("expr");
     mpc_parser_t* Lispy = mpc_new("lispy");
 
     /* Grammar */
     mpca_lang(MPCA_LANG_DEFAULT,
         "\
-        number  : /-?([0-9]+[.])?[0-9]+/ ; \
-        operator: '+' | '-' | '*' | '/' ; \
-        expr    : <number> | '(' <operator> <expr>+ ')' ; \
-        lispy   : /^/ <operator> <expr>+ /$/ ; \
+        number  : /-?[0-9]+/ ; \
+        symbol  : '+' | '-' | '*' | '/' ; \
+        sexpr   : '(' <expr>* ')' ; \
+        expr    : <number> | <symbol> | <sexpr> ; \
+        lispy   : /^/ <expr>* /$/ ; \
         ",
-        Number, Operator, Expr, Lispy);
+        Number, Symbol, Sexpr, Expr, Lispy);
 
     /* Print Version and Exit Information */
     puts("Lispy Version 0.0.0.1");
@@ -35,11 +37,9 @@ int main(int argc, char** argv) {
         mpc_result_t r;
         if (mpc_parse("<stdin>", input, Lispy, &r)) {
             /* Success: print and delete AST */
-            //mpc_ast_print(r.output);                       
-            //node_number_print(r.output);
-
-            lval result = eval(r.output);
-            lval_println(result);            
+            lval* x = lval_eval(lval_read(r.output));
+            lval_println(x);
+            lval_del(x);
             
             mpc_ast_delete(r.output);
         } else {
@@ -52,7 +52,7 @@ int main(int argc, char** argv) {
     }
 
     /* Parser cleanup */
-    mpc_cleanup(4, Number, Operator, Expr, Lispy);
+    mpc_cleanup(5, Number, Symbol, Sexpr, Expr, Lispy);
 
     return 0;
 }
