@@ -31,6 +31,9 @@ int main(int argc, char** argv) {
     puts("Lispy Version 0.0.0.1");
     puts("Press Ctrl+c to Exit\n");
 
+    lenv* e = lenv_new();
+    lenv_add_builtins(e);
+
     while (1) {
         char* input = readline("lispy> ");
         add_history(input);
@@ -39,7 +42,7 @@ int main(int argc, char** argv) {
         mpc_result_t r;
         if (mpc_parse("<stdin>", input, Lispy, &r)) {
             /* Success: print and delete AST */
-            lval* x = lval_eval(lval_read(r.output));
+            lval* x = lval_eval(e, lval_read(r.output));
             lval_println(x);
             lval_del(x);
             
@@ -52,6 +55,8 @@ int main(int argc, char** argv) {
 
         free(input);
     }
+
+    lenv_del(e);
 
     /* Parser cleanup */
     mpc_cleanup(6, Number, Symbol, Sexpr, Qexpr, Expr, Lispy);
