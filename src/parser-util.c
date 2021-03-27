@@ -98,7 +98,7 @@ lval* lval_read_num(mpc_ast_t* t) {
     errno = 0;
     long x = strtol(t->contents, NULL, 10);
     return errno != ERANGE ?
-      lval_num(x) : lval_err("invalid number");
+      lval_num(x) : lval_err("Invalid number.");
 }
 
 lval* lval_read(mpc_ast_t* t) {
@@ -179,8 +179,12 @@ lval* lval_eval_sexpr(lenv* e, lval* v) {
     /* ensure func as first element */
     lval* f = lval_pop(v, 0);
     if (f->type != LVAL_FUN) {
+        lval* err = lval_err(
+            "S-Expression starts with incorrect type. "
+            "Got %s, Expected %s.",
+            ltype_name(f->type), ltype_name(LVAL_FUN));
         lval_del(f); lval_del(v);
-        return lval_err("First element is not a function.");
+        return err;
     }
 
     /* built-in operator call */
@@ -374,7 +378,7 @@ lval* lenv_get(lenv* e, lval* k) {
         }
     }
     /* if no match, return error */
-    return lval_err("Unbound symbol.");
+    return lval_err("Unbound symbol '%s'", k->sym);
 }
 
 void lenv_put(lenv* e, lval* k, lval* v) {
