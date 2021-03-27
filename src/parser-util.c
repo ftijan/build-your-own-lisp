@@ -1,22 +1,5 @@
 #include "parser-util.h"
 
-#define LASSERT(args, cond, fmt, ...) \
-    if (!(cond)) { lval* err = lval_err(fmt, ##__VA_ARGS__); lval_del(args); return err; }
-
-#define LASSERT_TYPE(func, args, index, expect) \
-    LASSERT(args, args->cell[index]->type == expect, \
-    "Function '%s' passed incorrect type for argument %i. Got %s, Expected %s.", \
-    func, index, ltype_name(args->cell[index]->type), ltype_name(expect))
-
-#define LASSERT_NUM(func, args, num) \
-    LASSERT(args, args->count == num, \
-    "Function '%s' passed incorrect number of arguments. Got %i, Expected %i.", \
-    func, args->count, num)
-
-#define LASSERT_NOT_EMPTY(func, args, index) \
-    LASSERT(args, args->cell[index]->count != 0, \
-    "Function '%s' passed {} for argument %i.", func, index);
-
 /* number type lval */
 lval* lval_num(long x) {
     lval* v = malloc(sizeof(lval));
@@ -474,6 +457,11 @@ void lenv_add_builtins(lenv* e) {
     lenv_add_builtin(e, "<", builtin_lt);
     lenv_add_builtin(e, ">=", builtin_ge);
     lenv_add_builtin(e, "<=", builtin_le);
+
+    /* String functions */
+    lenv_add_builtin(e, "load", builtin_load);
+    lenv_add_builtin(e, "error", builtin_error);
+    lenv_add_builtin(e, "print", builtin_print);
 }
 
 char* ltype_name(int t) {
@@ -835,4 +823,29 @@ lval* lval_read_str(mpc_ast_t* t) {
     /* cleanup */
     free(unescaped);
     return str;
+}
+
+lval* builtin_print(lenv* e, lval* a) {
+    /* print args + space */
+    for (int i = 0; i < a->count; i++) {
+        lval_print(a->cell[i]); putchar(' ');
+    }
+    
+    /* print \n and delete args */
+    putchar('\n');
+    lval_del(a);
+
+    return lval_sexpr();
+}
+
+lval* builtin_error(lenv* e, lval* a) {
+    LASSERT_NUM("error", a, 1);
+    LASSERT_TYPE("error", a, 0, LVAL_STR);
+
+    /* construct error from arg */
+    lval* err = lval_err(a->cell[0]->str);
+
+    /* delete args and return */
+    lval_del(a);
+    return err;
 }
