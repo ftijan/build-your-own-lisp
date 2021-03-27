@@ -17,7 +17,7 @@ int main(int argc, char** argv) {
     /* Grammar */
     mpca_lang(MPCA_LANG_DEFAULT,
         "\
-        number  : /-?([0-9]+[.])?[0-9]+/ ; \
+        number  : /-?[0-9]+/ ; \
         symbol  : '+' | '-' | '*' | '/' ; \
         sexpr   : '(' <expr>* ')' ; \
         expr    : <number> | <symbol> | <sexpr> ; \
@@ -37,10 +37,7 @@ int main(int argc, char** argv) {
         mpc_result_t r;
         if (mpc_parse("<stdin>", input, Lispy, &r)) {
             /* Success: print and delete AST */
-            //mpc_ast_print(r.output);                       
-            //node_number_print(r.output);
-
-            lval* x = lval_read(r.output);
+            lval* x = lval_eval(lval_read(r.output));
             lval_println(x);
             lval_del(x);
             
