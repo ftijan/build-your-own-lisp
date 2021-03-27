@@ -64,3 +64,4 @@ lval* builtin_div(lenv* e, lval* a);
 void lenv_add_builtin(lenv* e, char* name, lbuiltin func);
 void lenv_add_builtins(lenv* e);
 char* ltype_name(int t);
+lval* builtin_def(lenv* e, lval* a);
