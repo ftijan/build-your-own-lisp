@@ -44,6 +44,10 @@ int main(int argc, char** argv) {
     lenv* e = lenv_new();
     lenv_add_builtins(e);
 
+    /* load standard library */
+    lval* std_lib_val = lval_add(lval_sexpr(), lval_str("lib-std.lispy"));
+    builtin_load(e, std_lib_val);
+
     /* repl */
     if (argc == 1) {        
         puts("Lispy Version 0.0.0.1");
