@@ -1,7 +1,7 @@
 /* editline shims */
-#ifdef _WIN32
-
 #include "compat.h"
+
+#ifdef _WIN32
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
