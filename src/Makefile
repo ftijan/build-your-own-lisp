@@ -1,4 +1,4 @@
-DEPENDENCIES = parser-util.c compat.c lib/mpc.c
+DEPENDENCIES = parser-util.c compat.c
 
 lispy:
 	gcc -std=c99 -Wall lispy.c $(DEPENDENCIES) -o lispy
