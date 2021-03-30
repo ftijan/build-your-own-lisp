@@ -1,7 +1,7 @@
 DEPENDENCIES = parser-util.c compat.c lib/mpc.c
 
-parsing: parsing.c
-	gcc -std=c99 -Wall parsing.c $(DEPENDENCIES) -o parsing
+lispy:
+	gcc -std=c99 -Wall lispy.c $(DEPENDENCIES) -o lispy
 
-parsing-debug: parsing.c
-	gcc -g -std=c99 -Wall parsing.c $(DEPENDENCIES) -o parsing
+lispy-debug:
+	gcc -g -std=c99 -Wall lispy.c $(DEPENDENCIES) -o lispy-debug
