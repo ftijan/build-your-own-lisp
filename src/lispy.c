@@ -50,7 +50,7 @@ int main(int argc, char** argv) {
 
     /* repl */
     if (argc == 1) {        
-        puts("Lispy Version 0.0.0.1");
+        puts("Lispy Version 1.0.0");
         puts("Press Ctrl+c to Exit\n");
 
         while (1) {
