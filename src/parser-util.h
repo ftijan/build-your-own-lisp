@@ -1,5 +1,8 @@
+#include <string.h>
+#include <stdio.h>
 #include <stdlib.h>
-#include "lib/mpc.h"
+#include <stdarg.h>
+#include <errno.h>
 
 #define LASSERT(args, cond, fmt, ...) \
     if (!(cond)) { lval* err = lval_err(fmt, ##__VA_ARGS__); lval_del(args); return err; }
@@ -60,8 +63,6 @@ lval* lval_sym(char* s);
 lval* lval_sexpr(void);
 lval* lval_qexpr(void);
 void lval_del(lval* v);
-lval* lval_read_num(mpc_ast_t* t);
-lval* lval_read(mpc_ast_t* t);
 lval* lval_add(lval* v, lval* x);
 void lval_expr_print(lval* v, char open, char close);
 void lval_print(lval* v);
@@ -109,8 +110,14 @@ lval* builtin_eq(lenv* e, lval* a);
 lval* builtin_ne(lenv* e, lval* a);
 lval* builtin_if(lenv* e, lval* a);
 lval* lval_str(char* s);
-void lval_print_str(lval* v);
-lval* lval_read_str(mpc_ast_t* t);
 lval* builtin_load(lenv* e, lval* a);
 lval* builtin_print(lenv* e, lval* a);
 lval* builtin_error(lenv* e, lval* a);
+lval* lval_read_expr(char* s, int* i, char end);
+lval* lval_read(char* s, int* i);
+lval* lval_read_sym(char* s, int* i);
+char lval_str_unescape(char x);
+char* lval_str_escape(char x);
+lval* lval_read_str(char* s, int* i);
+void lval_print_str(lval* v);
+lval* lval_read(char* s, int* i);
